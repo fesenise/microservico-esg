@@ -1,0 +1,122 @@
+name: CD Azure
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["CI Oracle"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'deployment/azure')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Definir versão
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            echo "sha=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Baixar código validado
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.version.outputs.sha }}
+
+      - name: Preparar pacote
+        run: |
+          git archive --format=tar.gz -o /tmp/esg-source.tar.gz HEAD
+
+      - name: Configurar SSH
+        env:
+          SSH_KEY: ${{ secrets.AZURE_SSH_KEY }}
+          AZURE_HOST: ${{ secrets.AZURE_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$AZURE_HOST" >> ~/.ssh/known_hosts
+
+      - name: Enviar versão para Azure
+        env:
+          AZURE_HOST: ${{ secrets.AZURE_HOST }}
+          AZURE_USER: ${{ secrets.AZURE_USER }}
+        run: |
+          scp -i ~/.ssh/id_ed25519 /tmp/esg-source.tar.gz \
+            "$AZURE_USER@$AZURE_HOST:/tmp/esg-source.tar.gz"
+
+      - name: Deploy staging e produção
+        env:
+          AZURE_HOST: ${{ secrets.AZURE_HOST }}
+          AZURE_USER: ${{ secrets.AZURE_USER }}
+          VERSION: ${{ steps.version.outputs.sha }}
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "$AZURE_USER@$AZURE_HOST" \
+            "VERSION='$VERSION' bash -s" <<'REMOTE'
+          set -euo pipefail
+
+          cd ~/microservico-esg
+          tar -xzf /tmp/esg-source.tar.gz
+
+          sudo docker build -t "microservico-esg:$VERSION" .
+
+          echo "=== DEPLOY STAGING ==="
+          sudo docker rm -f esg-staging 2>/dev/null || true
+          sudo docker run -d \
+            --name esg-staging \
+            --restart unless-stopped \
+            --env-file .env.fiap \
+            --memory 1g \
+            -p 127.0.0.1:8081:8080 \
+            "microservico-esg:$VERSION"
+
+          for i in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:8081/actuator/health >/dev/null; then
+              break
+            fi
+            if [ "$i" -eq 60 ]; then
+              echo "Staging não ficou saudável"
+              sudo docker logs --tail=100 esg-staging
+              exit 1
+            fi
+            sleep 5
+          done
+
+          python3 deploy/smoke.py http://127.0.0.1:8081
+          echo "STAGING OK"
+
+          echo "=== DEPLOY PRODUCAO ==="
+          sudo docker rm -f esg-app 2>/dev/null || true
+          sudo docker run -d \
+            --name esg-app \
+            --restart unless-stopped \
+            --env-file .env.fiap \
+            --memory 1g \
+            -p 127.0.0.1:8080:8080 \
+            "microservico-esg:$VERSION"
+
+          for i in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:8080/actuator/health >/dev/null; then
+              break
+            fi
+            if [ "$i" -eq 60 ]; then
+              echo "Produção não ficou saudável"
+              sudo docker logs --tail=100 esg-app
+              exit 1
+            fi
+            sleep 5
+          done
+
+          python3 deploy/smoke.py http://127.0.0.1:8080
+          echo "PRODUCAO OK"
+          REMOTE
