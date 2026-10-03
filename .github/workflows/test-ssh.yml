@@ -2,6 +2,11 @@ name: Test SSH Azure
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - deployment/azure
+    paths:
+      - '.github/workflows/test-ssh.yml'
 
 permissions:
   contents: read
