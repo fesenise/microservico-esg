@@ -1,0 +1,29 @@
+services:
+  oracle:
+    image: gvenzl/oracle-free:23.6-slim-faststart
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD:?}
+      APP_USER: ${DB_USERNAME:?}
+      APP_USER_PASSWORD: ${DB_PASSWORD:?}
+    shm_size: 1gb
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      start_period: 120s
+      retries: 60
+  test:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.test
+    environment:
+      DB_URL: jdbc:oracle:thin:@//oracle:1521/FREEPDB1
+      DB_USERNAME: ${DB_USERNAME:?}
+      DB_PASSWORD: ${DB_PASSWORD:?}
+      JWT_SECRET: ${JWT_SECRET:?}
+      FLYWAY_BASELINE_ON_MIGRATE: "false"
+    volumes:
+      - ./target/test-evidence:/workspace/target/surefire-reports
+    depends_on:
+      oracle:
+        condition: service_healthy

@@ -1,0 +1,52 @@
+name: esg
+services:
+  oracle:
+    image: gvenzl/oracle-free:23.6-slim-faststart
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD:?Execute deploy/init-env.sh}
+      APP_USER: ${DB_USERNAME:?}
+      APP_USER_PASSWORD: ${DB_PASSWORD:?}
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    shm_size: 1gb
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      start_period: 120s
+      retries: 60
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+  app:
+    image: microservico-esg:${APP_TAG:-local}
+    build: .
+    environment:
+      DB_URL: jdbc:oracle:thin:@//oracle:1521/FREEPDB1
+      DB_USERNAME: ${DB_USERNAME:?}
+      DB_PASSWORD: ${DB_PASSWORD:?}
+      JWT_SECRET: ${JWT_SECRET:?}
+      JWT_EXPIRATION: "3600"
+      FLYWAY_BASELINE_ON_MIGRATE: "false"
+      FLYWAY_BASELINE_VERSION: "0"
+      PORT: "8080"
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=70
+    mem_limit: 1g
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      oracle:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--max-time", "5", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 6s
+      start_period: 90s
+      retries: 30
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+volumes:
+  oracle-data:

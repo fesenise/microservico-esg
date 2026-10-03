@@ -1,0 +1,7 @@
+FROM eclipse-temurin:21-jdk
+WORKDIR /workspace
+COPY .mvn/ .mvn/
+COPY mvnw pom.xml ./
+RUN chmod +x mvnw
+COPY src/ src/
+CMD ["./mvnw", "-B", "--no-transfer-progress", "verify"]

@@ -1,0 +1,36 @@
+name: CI Oracle
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: contextLoads com Oracle efêmero e Flyway
+        run: bash deploy/test.sh
+      - name: Build da imagem
+        run: docker build -t microservico-esg:${{ github.sha }} .
+      - name: Smoke da aplicação com Oracle isolado
+        run: |
+          bash deploy/init-env.sh .env
+          docker compose up -d --wait --wait-timeout 900
+          python3 deploy/smoke.py
+        env:
+          APP_TAG: ${{ github.sha }}
+      - name: Relatórios de teste
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/test-evidence/
+          if-no-files-found: warn
+      - name: Limpar ambiente efêmero
+        if: always()
+        run: |
+          if [ -f .env ]; then docker compose down --volumes --remove-orphans; fi
+          rm -f .env

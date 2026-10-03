@@ -5,7 +5,7 @@ Projeto de Felipe Senise (RM565259).
 ## Estado desta etapa
 Base preparada para versionamento. A aplicação Java utiliza Oracle, JPA e Flyway.
 A atividade acadêmica MongoDB foi entregue separadamente e não está integrada a este código.
-Docker Compose, pipeline CI/CD, deploy staging/produção e evidências serão adicionados nas próximas etapas.
+Docker Compose, CI e roteiro de deploy manual Azure estão preparados neste pacote; a execução e as evidências ainda precisam ser obtidas. CD automático e staging/produção separados permanecem pendentes.
 Este pacote ainda não é a entrega final de DevOps.
 
 ## Configuração
@@ -30,3 +30,8 @@ A execução isolada em CI ainda será configurada. Nenhum resultado de teste ou
 
 ## Tecnologias
 Java 21, Spring Boot 4.0.6, Spring Security/JWT, Maven, Oracle, JPA, Flyway e Docker.
+
+
+## Deployment Azure preparado
+
+Consulte [deploy/GUIA_AZURE.md](deploy/GUIA_AZURE.md) para Compose, CI Oracle, secrets e deploy manual. Os arquivos foram preparados; a execução real e as evidências ainda precisam ser obtidas.
