@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Resposta de erro da API",
+  "type": "object",
+  "required": [
+    "dataHora",
+    "status",
+    "erro",
+    "mensagem",
+    "caminho"
+  ],
+  "properties": {
+    "dataHora": {
+      "type": "string",
+      "minLength": 16
+    },
+    "status": {
+      "type": "integer",
+      "minimum": 400,
+      "maximum": 599
+    },
+    "erro": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mensagem": {
+      "type": "string",
+      "minLength": 1
+    },
+    "caminho": {
+      "type": "string",
+      "pattern": "^/"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "id",
+      "nome",
+      "endereco",
+      "cidade",
+      "estado",
+      "tipoResiduoAceito",
+      "ativo"
+    ],
+    "properties": {
+      "id": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "nome": {
+        "type": "string",
+        "minLength": 1
+      },
+      "endereco": {
+        "type": "string",
+        "minLength": 1
+      },
+      "cidade": {
+        "type": "string",
+        "minLength": 1
+      },
+      "estado": {
+        "type": "string",
+        "pattern": "^[A-Z]{2}$"
+      },
+      "tipoResiduoAceito": {
+        "type": "string",
+        "minLength": 1
+      },
+      "ativo": {
+        "type": "integer",
+        "enum": [
+          0,
+          1
+        ]
+      }
+    },
+    "additionalProperties": false
+  }
+}

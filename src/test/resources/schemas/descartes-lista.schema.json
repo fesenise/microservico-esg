@@ -1,0 +1,114 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "id",
+      "usuario",
+      "pontoColeta",
+      "tipoResiduo",
+      "pesoKg",
+      "dataDescarte"
+    ],
+    "properties": {
+      "id": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "usuario": {
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "email",
+          "role"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "nome": {
+            "type": "string",
+            "minLength": 1
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "pontoColeta": {
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "endereco",
+          "cidade",
+          "estado",
+          "tipoResiduoAceito",
+          "ativo"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "nome": {
+            "type": "string",
+            "minLength": 1
+          },
+          "endereco": {
+            "type": "string",
+            "minLength": 1
+          },
+          "cidade": {
+            "type": "string",
+            "minLength": 1
+          },
+          "estado": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$"
+          },
+          "tipoResiduoAceito": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ativo": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "tipoResiduo": {
+        "type": "string",
+        "minLength": 1
+      },
+      "pesoKg": {
+        "type": "number",
+        "exclusiveMinimum": 0
+      },
+      "dataDescarte": {
+        "type": "string",
+        "minLength": 16
+      },
+      "observacao": {
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    },
+    "additionalProperties": false
+  }
+}

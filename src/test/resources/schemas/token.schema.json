@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": [
+    "token",
+    "tipo"
+  ],
+  "properties": {
+    "token": {
+      "type": "string",
+      "minLength": 20
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "Bearer"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

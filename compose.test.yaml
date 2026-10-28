@@ -24,6 +24,7 @@ services:
       FLYWAY_BASELINE_ON_MIGRATE: "false"
     volumes:
       - ./target/test-evidence:/workspace/target/surefire-reports
+      - ./target/maven-cache:/root/.m2
     depends_on:
       oracle:
         condition: service_healthy
